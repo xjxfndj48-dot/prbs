@@ -1,4 +1,4 @@
-local Players = game:GetService('Players')
+Local Players = game:GetService('Players')
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local UIS = game:GetService('UserInputService')
 local TweenService = game:GetService('TweenService')
@@ -10,8 +10,8 @@ local WindUI = loadstring(game:HttpGet('https://raw.githubusercontent.com/Footag
 local Window = WindUI:CreateWindow({
     Title = 'qqwmnt hub',
     Icon = 'ghost',
-    Author = 'qqwmnt',
-    Folder = 'qqwmnt',
+    Author = 'by qqwmntSS',
+    Folder = 'solvexis hub',
     Size = UDim2.fromOffset(500, 350),
     Transparent = false,
     Theme = 'Dark',
@@ -20,7 +20,7 @@ local Window = WindUI:CreateWindow({
     SideBarWidth = 200,
     OpenButton = {
         Enabled = true,
-        Title = 'qqwmn't',
+        Title = 'solvexis',
         Draggable = true,
         CornerRadius = UDim.new(0, 8),
         StrokeThickness = 1,
@@ -39,10 +39,6 @@ local GoldTab = Window:Tab({
     Title = 'Gold Jump',
     Icon = 'mouse-pointer-click',
 })
-local CombatTab = Window:Tab({
-    Title = 'Combat',
-    Icon = 'crosshair',
-})
 local ESPTab = Window:Tab({
     Title = 'ESP',
     Icon = 'eye',
@@ -60,7 +56,7 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 local function SaveButtonPosition(pos, name)
     pcall(function()
         if writefile then
-            local folder = 'qqwmnt'
+            local folder = 'NexiumHub'
             if not isfolder(folder) then
                 makefolder(folder)
             end
@@ -74,8 +70,8 @@ end
 
 local function LoadButtonPosition(name)
     local success, result = pcall(function()
-        if readfile and isfile and isfile('qqwmnt/' .. name .. 'Pos.json') then
-            return HttpService:JSONDecode(readfile('qqwmnt/' .. name .. 'Pos.json'))
+        if readfile and isfile and isfile('NexiumHub/' .. name .. 'Pos.json') then
+            return HttpService:JSONDecode(readfile('NexiumHub/' .. name .. 'Pos.json'))
         end
     end)
     if success and result then
@@ -85,7 +81,7 @@ local function LoadButtonPosition(name)
 end
 
 ----------------------------------------------------
--- СИСТЕМА КНОПОК BOMB JUMP
+-- СИСТЕМА КНОПОК BOMB JUMP (BACKGROUND TRANSPARENCY = 0.45)
 ----------------------------------------------------
 local function CreateJumpSystem(config)
     local size = config.Size or 70
@@ -108,7 +104,7 @@ local function CreateJumpSystem(config)
     button.Position = buttonPos
     button.Text = ""
     button.BackgroundColor3 = Color3.fromRGB(15, 12, 28)
-    button.BackgroundTransparency = 0.45
+    button.BackgroundTransparency = 0.45 -- Установлено значение 0.45
     button.Active = true
     button.AutoButtonColor = false
     button.Visible = visible
@@ -162,12 +158,14 @@ local function CreateJumpSystem(config)
 
     local function PlayClickAnimation()
         local currentSize = button.Size.X.Offset
+
         local tweenDown = TweenService:Create(button, TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             Size = UDim2.new(0, currentSize * 0.92, 0, currentSize * 0.92),
         })
         local tweenUp = TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
             Size = UDim2.new(0, currentSize, 0, currentSize),
         })
+
         tweenDown:Play()
         tweenDown.Completed:Connect(function()
             tweenUp:Play()
@@ -404,273 +402,7 @@ CreateJumpSystem({
 })
 
 ----------------------------------------------------
--- ТОЧНАЯ СИСТЕМА ВЫСТРЕЛА (ИЗ VISION HUB)
-----------------------------------------------------
-local PlayerData = {}
-pcall(function()
-    local remotes = ReplicatedStorage:WaitForChild("Remotes", 3)
-    if remotes then
-        local gameplay = remotes:FindFirstChild("Gameplay", true)
-        if gameplay then
-            local pdEvent = gameplay:FindFirstChild("PlayerDataChanged")
-            if pdEvent and pdEvent:IsA("RemoteEvent") then
-                pdEvent.OnClientEvent:Connect(function(data)
-                    if type(data) == "table" then
-                        PlayerData = data
-                    end
-                end)
-            end
-        end
-    end
-end)
-
-local function FindMurderer()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            if (plr:FindFirstChild("Backpack") and plr.Backpack:FindFirstChild("Knife")) or 
-               (plr.Character and plr.Character:FindFirstChild("Knife")) then
-                return plr
-            end
-        end
-    end
-    for playerName, data in pairs(PlayerData) do
-        if data and (data.Role == "Murderer" or data.role == "Murderer") then
-            local found = Players:FindFirstChild(playerName)
-            if found and found ~= LocalPlayer then return found end
-        end
-    end
-    return nil
-end
-
-local function GetPredictedPosition(player)
-    if not player or not player.Character then return Vector3.new(0,0,0) end
-    local hrp = player.Character:FindFirstChild("HumanoidRootPart") or player.Character.PrimaryPart
-    if not hrp then return Vector3.new(0,0,0) end
-
-    local vel = hrp.AssemblyLinearVelocity or hrp.Velocity or Vector3.new(0,0,0)
-    local ping = 0
-    pcall(function()
-        if LocalPlayer and typeof(LocalPlayer.GetNetworkPing) == "function" then
-            ping = LocalPlayer:GetNetworkPing() or 0
-        end
-    end)
-    if type(ping) ~= "number" then ping = tonumber(ping) or 0 end
-    if ping > 1 then ping = ping / 1000 end
-    local offset = 2.8
-    local leadTime = math.max(0, offset * 0.01) + ping
-
-    return hrp.Position + vel * leadTime
-end
-
-local function ShootMurdererOnce()
-    local character = LocalPlayer.Character
-    if not character then return end
-
-    local target = FindMurderer()
-    if not target or not target.Character then return end
-    
-    local mHRP = target.Character:FindFirstChild("HumanoidRootPart")
-    local lHRP = character:FindFirstChild("HumanoidRootPart")
-    if not mHRP or not lHRP then return end
-
-    local rayParams = RaycastParams.new()
-    rayParams.FilterType = Enum.RaycastFilterType.Exclude
-    rayParams.FilterDescendantsInstances = { character }
-    local direction = (mHRP.Position - lHRP.Position)
-    local ok, res = pcall(function()
-        return workspace:Raycast(lHRP.Position, direction, rayParams)
-    end)
-
-    local clearShot = false
-    if not ok or not res then
-        clearShot = true
-    else
-        if res.Instance and target.Character and res.Instance:IsDescendantOf(target.Character) then
-            clearShot = true
-        end
-    end
-
-    if not clearShot then return end
-
-    if not character:FindFirstChild("Gun") then
-        local tool = LocalPlayer.Backpack and LocalPlayer.Backpack:FindFirstChild("Gun")
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-        if tool and humanoid then
-            pcall(function() humanoid:EquipTool(tool) end)
-            task.wait(0.08)
-        end
-    end
-
-    local gun = character:FindFirstChild("Gun")
-    if not gun then return end
-
-    local knifeLocal = gun:FindFirstChild("KnifeLocal")
-    local createBeam = knifeLocal and knifeLocal:FindFirstChild("CreateBeam")
-    local rf = createBeam and createBeam:FindFirstChild("RemoteFunction")
-    
-    if gun and knifeLocal and createBeam and rf and typeof(rf.InvokeServer) == "function" then
-        local predPos = GetPredictedPosition(target)
-        pcall(function()
-            rf:InvokeServer(1, predPos, "AH2")
-        end)
-    end
-end
-
-local function CreateShootSystem(config)
-    local size = config.Size or 75
-    local visible = false
-    local editMode = false
-    local buttonDefaultText = 'Shoot'
-    local saveName = config.SaveName
-    local currentKeybind = config.Keybind or nil
-    local defaultPos = config.Position or UDim2.new(0.5, -(size / 2), 0.7, -(size / 2))
-    local buttonPos = LoadButtonPosition(saveName) or defaultPos
-
-    local activeThemeColor = config.DefaultColor or Color3.fromRGB(255, 50, 50)
-
-    local button = Instance.new('TextButton')
-    button.Name = saveName .. 'Button'
-    button.Parent = gui
-    button.Size = UDim2.new(0, size, 0, size)
-    button.Position = buttonPos
-    button.Text = ""
-    button.BackgroundColor3 = Color3.fromRGB(15, 12, 28)
-    button.BackgroundTransparency = 0.45
-    button.Active = true
-    button.AutoButtonColor = false
-    button.Visible = visible
-    button.ZIndex = 100
-
-    local corner = Instance.new('UICorner')
-    corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = button
-
-    local mainGradient = Instance.new('UIGradient')
-    mainGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(45, 20, 25)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 8, 10)),
-    })
-    mainGradient.Transparency = NumberSequence.new(0.2)
-    mainGradient.Rotation = 45
-    mainGradient.Parent = button
-
-    local label = Instance.new('TextLabel')
-    label.Name = "ButtonLabel"
-    label.Parent = button
-    label.Size = UDim2.new(1, 0, 1, 0)
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.GothamMedium
-    label.Text = buttonDefaultText
-    label.TextSize = 13
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.TextStrokeTransparency = 0.7
-    label.ZIndex = 102
-
-    local stroke = Instance.new('UIStroke')
-    stroke.Thickness = 1.5
-    stroke.Color = activeThemeColor
-    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    stroke.LineJoinMode = Enum.LineJoinMode.Round
-    stroke.Parent = button
-
-    local function PlayClickAnimation()
-        local currentSize = button.Size.X.Offset
-        local tweenDown = TweenService:Create(button, TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, currentSize * 0.92, 0, currentSize * 0.92),
-        })
-        local tweenUp = TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0, currentSize, 0, currentSize),
-        })
-        tweenDown:Play()
-        tweenDown.Completed:Connect(function() tweenUp:Play() end)
-    end
-
-    button.MouseButton1Click:Connect(function()
-        if editMode then return end
-        PlayClickAnimation()
-        ShootMurdererOnce()
-    end)
-
-    UIS.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed or editMode or not currentKeybind then return end
-        if input.KeyCode == currentKeybind then
-            PlayClickAnimation()
-            ShootMurdererOnce()
-        end
-    end)
-
-    local dragging, dragStart, startPos
-    button.InputBegan:Connect(function(input)
-        if not editMode then return end
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = button.Position
-        end
-    end)
-    UIS.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            if dragging and editMode then SaveButtonPosition(button.Position, saveName) end
-            dragging = false
-        end
-    end)
-    UIS.InputChanged:Connect(function(input)
-        if not editMode then return end
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
-            button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-
-    config.Tab:Toggle({
-        Title = 'Show Shoot Button',
-        Default = false,
-        Callback = function(state)
-            visible = state
-            button.Visible = visible
-        end,
-    })
-    config.Tab:Toggle({
-        Title = 'Edit Mode',
-        Default = false,
-        Callback = function(state)
-            editMode = state
-            label.Text = editMode and 'MOVE' or buttonDefaultText
-        end,
-    })
-    config.Tab:Colorpicker({
-        Title = 'Button Color',
-        Default = activeThemeColor,
-        Callback = function(color)
-            activeThemeColor = color
-            stroke.Color = color
-        end,
-    })
-    config.Tab:Slider({
-        Title = 'Button Size',
-        Value = { Min = 30, Max = 200, Default = size },
-        Callback = function(v)
-            size = v
-            button.Size = UDim2.new(0, size, 0, size)
-        end,
-    })
-    config.Tab:Keybind({
-        Title = 'Shoot Keybind',
-        Default = currentKeybind,
-        Callback = function(key) currentKeybind = key end,
-    })
-end
-
-CreateShootSystem({
-    Tab = CombatTab,
-    SaveName = 'ShootMurderer',
-    Size = 75,
-    Keybind = Enum.KeyCode.E,
-    DefaultColor = Color3.fromRGB(255, 50, 50),
-})
-
-----------------------------------------------------
--- МОДУЛЬ ESP
+-- МОДУЛЬ ESP ИЗ VISION HUB (ИГРОКИ, РОЛИ, GUN DROP)
 ----------------------------------------------------
 local ESP_Config = {
     Enabled = false,
@@ -698,8 +430,11 @@ local function GetPlayerRole(player)
     local hasKnife = (backpack and backpack:FindFirstChild("Knife")) or character:FindFirstChild("Knife")
     local hasGun = (backpack and backpack:FindFirstChild("Gun")) or character:FindFirstChild("Gun")
 
-    if hasKnife then return "Murderer"
-    elseif hasGun then return "Sheriff" end
+    if hasKnife then
+        return "Murderer"
+    elseif hasGun then
+        return "Sheriff"
+    end
     return "Innocent"
 end
 
@@ -731,6 +466,7 @@ local function CreateESPForPlayer(player)
 
     local highlight = Instance.new("Highlight")
     highlight.Name = "Highlight"
+    highlight.Adornee = nil
     highlight.FillTransparency = 0.5
     highlight.OutlineTransparency = 0
     highlight.Parent = folder
@@ -751,10 +487,16 @@ local function CreateESPForPlayer(player)
     nameLabel.TextStrokeTransparency = 0.5
     nameLabel.Parent = billboard
 
-    espObjects[player] = { Folder = folder, Highlight = highlight, Billboard = billboard, Label = nameLabel }
+    espObjects[player] = {
+        Folder = folder,
+        Highlight = highlight,
+        Billboard = billboard,
+        Label = nameLabel
+    }
 end
 
-local gunDropHighlight, gunDropBillboard = nil, nil
+local gunDropHighlight = nil
+local gunDropBillboard = nil
 
 local function UpdateGunDropESP()
     local gunDrop = workspace:FindFirstChild("GunDrop", true)
@@ -846,15 +588,76 @@ end)
 Players.PlayerRemoving:Connect(ClearESP)
 
 ----------------------------------------------------
--- ИНТЕРФЕЙС ESP (WindUI)
+-- ИНТЕРФЕЙС ВКЛАДКИ ESP (WindUI)
 ----------------------------------------------------
-ESPTab:Toggle({ Title = 'Enable ESP', Default = false, Callback = function(state) ESP_Config.Enabled = state end })
-ESPTab:Toggle({ Title = 'Show Roles (Murderer/Sheriff)', Default = false, Callback = function(state) ESP_Config.Roles = state end })
-ESPTab:Toggle({ Title = 'Show Boxes / Highlights', Default = false, Callback = function(state) ESP_Config.Boxes = state end })
-ESPTab:Toggle({ Title = 'Show Names', Default = false, Callback = function(state) ESP_Config.Names = state end })
-ESPTab:Toggle({ Title = 'Show Gun Drop', Default = false, Callback = function(state) ESP_Config.GunDrop = state end })
+ESPTab:Toggle({
+    Title = 'Enable ESP',
+    Default = false,
+    Callback = function(state)
+        ESP_Config.Enabled = state
+    end,
+})
 
-ESPTab:Colorpicker({ Title = 'Murderer Color', Default = ESP_Config.MurdererColor, Callback = function(color) ESP_Config.MurdererColor = color end })
-ESPTab:Colorpicker({ Title = 'Sheriff Color', Default = ESP_Config.SheriffColor, Callback = function(color) ESP_Config.SheriffColor = color end })
-ESPTab:Colorpicker({ Title = 'Innocent Color', Default = ESP_Config.InnocentColor, Callback = function(color) ESP_Config.InnocentColor = color end })
-ESPTab:Colorpicker({ Title = 'Gun Drop Color', Default = ESP_Config.GunDropColor, Callback = function(color) ESP_Config.GunDropColor = color end })
+ESPTab:Toggle({
+    Title = 'Show Roles (Murderer/Sheriff)',
+    Default = false,
+    Callback = function(state)
+        ESP_Config.Roles = state
+    end,
+})
+
+ESPTab:Toggle({
+    Title = 'Show Boxes / Highlights',
+    Default = false,
+    Callback = function(state)
+        ESP_Config.Boxes = state
+    end,
+})
+
+ESPTab:Toggle({
+    Title = 'Show Names',
+    Default = false,
+    Callback = function(state)
+        ESP_Config.Names = state
+    end,
+})
+
+ESPTab:Toggle({
+    Title = 'Show Gun Drop',
+    Default = false,
+    Callback = function(state)
+        ESP_Config.GunDrop = state
+    end,
+})
+
+ESPTab:Colorpicker({
+    Title = 'Murderer Color',
+    Default = ESP_Config.MurdererColor,
+    Callback = function(color)
+        ESP_Config.MurdererColor = color
+    end,
+})
+
+ESPTab:Colorpicker({
+    Title = 'Sheriff Color',
+    Default = ESP_Config.SheriffColor,
+    Callback = function(color)
+        ESP_Config.SheriffColor = color
+    end,
+})
+
+ESPTab:Colorpicker({
+    Title = 'Innocent Color',
+    Default = ESP_Config.InnocentColor,
+    Callback = function(color)
+        ESP_Config.InnocentColor = color
+    end,
+})
+
+ESPTab:Colorpicker({
+    Title = 'Gun Drop Color',
+    Default = ESP_Config.GunDropColor,
+    Callback = function(color)
+        ESP_Config.GunDropColor = color
+    end,
+})
