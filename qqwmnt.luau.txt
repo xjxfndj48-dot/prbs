@@ -8,7 +8,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local WindUI = loadstring(game:HttpGet('https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua'))()
 local Window = WindUI:CreateWindow({
-    Title = "qqwmn't",
+    Title = "qqwmn't hub",
     Icon = 'ghost',
     Author = 'qqwmnt',
     Folder = "qqwmnt",
