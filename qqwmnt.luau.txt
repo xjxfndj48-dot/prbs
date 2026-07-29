@@ -8,10 +8,10 @@ local LocalPlayer = Players.LocalPlayer
 
 local WindUI = loadstring(game:HttpGet('https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua'))()
 local Window = WindUI:CreateWindow({
-    Title = "qqwmn't hub",
+    Title = 'qqwmnt hub',
     Icon = 'ghost',
     Author = 'qqwmnt',
-    Folder = "qqwmnt",
+    Folder = 'qqwmnt',
     Size = UDim2.fromOffset(500, 350),
     Transparent = false,
     Theme = 'Dark',
